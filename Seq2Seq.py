@@ -179,6 +179,10 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
                 question = finput.readline()
                 print('Question: ', question.replace('\n','').replace('<EOS>',''))
                 print('Answer', str(each_answer).replace('<EOS>','').replace('<GO>',''))
+
+    elif input_mode.upper() == 'API':
+        return final_answer
+
     else:
         for each_answer in final_answer:
             print('Question: ', str(p_helper.get_out_put_from_tokens(

@@ -60,7 +60,7 @@ def make_input_fn(
 
 def predict_input_fn(input_filename, vocab, input_mode, input_process=tokenize_and_map):
     max_len = 0
-    if input_mode.upper() == 'INPUT_FILE':
+    if input_mode.upper() == 'INPUT_FILE' or input_mode.upper() == 'API':
         with open(input_filename) as finput:
             for in_line in finput:
                 max_len = max(len(in_line.split(" ")), max_len)
