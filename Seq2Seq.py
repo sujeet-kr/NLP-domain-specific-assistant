@@ -151,7 +151,7 @@ def train_seq2seq(
 
 
 
-def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
+def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode, command_line_input=None):
     vocab = p_helper.load_vocab(vocab_file)
 
     params = {
@@ -171,7 +171,7 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
         model_fn=seq2seq,
         model_dir=model_dir, params=params)
 
-    inputs_with_tokens = p_helper.predict_input_fn(input_filename, vocab, input_mode)
+    inputs_with_tokens = p_helper.predict_input_fn(input_filename, vocab, input_mode, command_line_input)
     pred_input_fn = tf.estimator.inputs.numpy_input_fn(x=inputs_with_tokens,
                                                        shuffle=False,
                                                        num_epochs=1)
@@ -193,7 +193,4 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
         return final_answer
 
     else:
-        for each_answer in final_answer:
-            print('Question: ', str(p_helper.get_out_put_from_tokens(
-                            inputs_with_tokens['input'], vocab)[0]).replace('<EOS>',''))
-            print('Answer', str(each_answer).replace('<EOS>',''))
+        return str(final_answer[0])

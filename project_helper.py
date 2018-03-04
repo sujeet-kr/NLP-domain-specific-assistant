@@ -58,7 +58,7 @@ def make_input_fn(
     return input_fn, feed_fn
 
 
-def predict_input_fn(input_filename, vocab, input_mode, input_process=tokenize_and_map):
+def predict_input_fn(input_filename, vocab, input_mode, command_line_input, input_process=tokenize_and_map):
     max_len = 0
     if input_mode.upper() == 'INPUT_FILE' or input_mode.upper() == 'API':
         with open(input_filename) as finput:
@@ -78,8 +78,7 @@ def predict_input_fn(input_filename, vocab, input_mode, input_process=tokenize_a
         pred_line_tmp = np.delete(predict_lines, 0, 0)
 
     elif input_mode.upper() == "COMMAND_LINE":
-        input_from_user = input("Question: ")
-        input_from_user = str(input_from_user).lower()
+        input_from_user = str(command_line_input).lower()
         predict_lines = np.empty(len(input_from_user.split(" ")) + 1, int)
         new_line_tmp = input_process(input_from_user, vocab)
         new_line = np.append(new_line_tmp, [int(END_TOKEN)])

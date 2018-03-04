@@ -30,7 +30,11 @@ def main():
             s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'input_file')
         elif infer_mode.upper() == "COMMAND":
             print("Entered Inference Command Mode")
-            s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'command_line')
+            command_line_input = input("Question: ")
+            ans = s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'command_line',
+                                      command_line_input)
+            print("\nQuestion: ", command_line_input)
+            print("\nAnswer: ", ans.replace('<EOS>',''))
         else:
             raise ValueError("Correct Inference mode (FILE/COMMAND) was not supplied")
     else:
