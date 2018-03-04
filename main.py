@@ -10,8 +10,8 @@ def main():
     #FOR TRAINING
     # s2s.train_seq2seq('Data/final_question_file', 'Data/final_answer_file', 'Data/vocab_map', 'model/seq2seq')
     #FOR PREDICTION     ---  'input_file'/'command_line'
-    # s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'input_file')
-    s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'command_line')
+    s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'input_file')
+    # s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'command_line')
 
     print("FINISHED \n")
 
