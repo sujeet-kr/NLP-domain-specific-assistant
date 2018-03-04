@@ -28,5 +28,5 @@ To Execute the project:
     - Command line mode - `python3 main.py inference command`
     
    - Data preparation (if needed): 
-    - movie_conversation.txt and movie_lines.txt should be present under `/Data`
-    - Run `python3 data_preparation.py`
+      - movie_conversation.txt and movie_lines.txt should be present under `/Data`
+      - Run `python3 data_preparation.py`
