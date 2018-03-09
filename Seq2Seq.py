@@ -32,8 +32,14 @@ def seq2seq(features, labels, mode, params):
     with tf.variable_scope('embed', reuse=True):
         embeddings = tf.get_variable('embeddings')
 
-    fw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
-    bw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+    if cell_type.upper() == 'GRU':
+        fw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+        bw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+    elif cell_type.upper() == 'LSTM':
+        fw_cell = tf.contrib.rnn.BasicLSTMCell(num_units=num_units)
+        bw_cell = tf.contrib.rnn.BasicLSTMCell(num_units=num_units)
+    else:
+        raise ValueError("The Memory Cell unit %s provided is not valid " % cell_type)
 
     if dropout > 0.0:
         print("  %s, dropout=%g " % (type(fw_cell).__name__, dropout))
