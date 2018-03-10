@@ -196,7 +196,7 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode, command_l
                 print('Answer', str(each_answer).replace('<EOS>','').replace('<GO>',''))
 
     elif input_mode.upper() == 'API':
-        return final_answer
+        return (str(final_answer[0]).replace('<EOS>','').replace('<GO>', ''))
 
     else:
         return str(final_answer[0])
