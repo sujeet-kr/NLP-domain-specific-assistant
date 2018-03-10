@@ -58,7 +58,7 @@ def make_input_fn(
     return input_fn, feed_fn
 
 
-def predict_input_fn(input_filename, vocab, input_mode, input_process=tokenize_and_map):
+def predict_input_fn(input_filename, vocab, input_mode, command_line_input, input_process=tokenize_and_map):
     max_len = 0
     if input_mode.upper() == 'INPUT_FILE' or input_mode.upper() == 'API':
         with open(input_filename) as finput:
@@ -78,8 +78,7 @@ def predict_input_fn(input_filename, vocab, input_mode, input_process=tokenize_a
         pred_line_tmp = np.delete(predict_lines, 0, 0)
 
     elif input_mode.upper() == "COMMAND_LINE":
-        input_from_user = input("Question: ")
-        input_from_user = str(input_from_user).lower()
+        input_from_user = str(command_line_input).lower()
         predict_lines = np.empty(len(input_from_user.split(" ")) + 1, int)
         new_line_tmp = input_process(input_from_user, vocab)
         new_line = np.append(new_line_tmp, [int(END_TOKEN)])
@@ -131,3 +130,13 @@ def get_out_put_from_tokens(all_sentences, vocab):
         all_string_sent.append(' '.join(string_sent))
     return all_string_sent
 
+def get_out_put_from_tokens_beam_search(all_sentences, vocab):
+    rev_vocab = get_rev_vocab(vocab)
+    all_string_sent = []
+    for each_sent in all_sentences:
+        each_sent = each_sent[:, 0]
+        string_sent = []
+        for each_word in each_sent:
+            string_sent.append(rev_vocab.get(each_word))
+        all_string_sent.append(' '.join(string_sent))
+    return all_string_sent

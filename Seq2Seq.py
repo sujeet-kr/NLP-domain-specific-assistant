@@ -9,7 +9,6 @@ import project_helper as p_helper
 GO_TOKEN = 0
 END_TOKEN = 1
 UNK_TOKEN = 2
-
 def seq2seq(features, labels, mode, params):
 
     vocab_size = params['vocab_size']
@@ -20,6 +19,7 @@ def seq2seq(features, labels, mode, params):
     dropout = params['dropout']
     attention_mechanism_name = params['attention_mechanism_name']
     cell_type = params['cell_type']
+    beam_width = params['beam_width']
 
     inp = features['input']
     batch_size = tf.shape(inp)[0]
@@ -32,8 +32,14 @@ def seq2seq(features, labels, mode, params):
     with tf.variable_scope('embed', reuse=True):
         embeddings = tf.get_variable('embeddings')
 
-    fw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
-    bw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+    if cell_type.upper() == 'GRU':
+        fw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+        bw_cell = tf.contrib.rnn.GRUCell(num_units=num_units)
+    elif cell_type.upper() == 'LSTM':
+        fw_cell = tf.contrib.rnn.BasicLSTMCell(num_units=num_units)
+        bw_cell = tf.contrib.rnn.BasicLSTMCell(num_units=num_units)
+    else:
+        raise ValueError("The Memory Cell unit %s provided is not valid " % cell_type)
 
     if dropout > 0.0:
         print("  %s, dropout=%g " % (type(fw_cell).__name__, dropout))
@@ -54,15 +60,17 @@ def seq2seq(features, labels, mode, params):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         # Specific for Prediction
-        pred_outputs = set_decoder.setting_decoder(pred_helper, 'decode', num_units, encoder_outputs, input_lengths,
-                                    vocab_size, batch_size, output_max_length, attention_mechanism_name, cell_type,
-                                    reuse=False)
+        pred_outputs = set_decoder.setting_decoder(pred_helper, 'decode', num_units, encoder_outputs,encoder_final_state, input_lengths,
+                                                   vocab_size, batch_size, output_max_length, attention_mechanism_name,
+                                                   cell_type, embeddings, start_tokens, END_TOKEN, beam_width,
+                                                   reuse=False)
 
-        tf.identity(pred_outputs.sample_id[0], name='predictions')
-
-        return tf.estimator.EstimatorSpec(
-            mode=mode,
-            predictions=pred_outputs.sample_id)
+        if beam_width > 0:
+            tf.identity(pred_outputs.predicted_ids, name='predictions')
+            return tf.estimator.EstimatorSpec(mode=mode,predictions=pred_outputs.predicted_ids)
+        else:
+            tf.identity(pred_outputs.sample_id[0], name='predictions')
+            return tf.estimator.EstimatorSpec(mode=mode,predictions=pred_outputs.sample_id)
 
     else:
         # Specific For Training
@@ -75,11 +83,13 @@ def seq2seq(features, labels, mode, params):
 
         train_helper = tf.contrib.seq2seq.TrainingHelper(output_embed, output_lengths)
 
-        train_outputs = set_decoder.setting_decoder(train_helper, 'decode', num_units, encoder_outputs, input_lengths,
-                        vocab_size, batch_size, output_max_length, attention_mechanism_name, cell_type, reuse=None)
+        train_outputs = set_decoder.setting_decoder(train_helper, 'decode', num_units, encoder_outputs, encoder_final_state, input_lengths,
+                        vocab_size, batch_size, output_max_length, attention_mechanism_name, cell_type, embeddings,
+                                                    start_tokens, END_TOKEN, beam_width, reuse=None)
 
-        pred_outputs = set_decoder.setting_decoder(pred_helper, 'decode', num_units, encoder_outputs, input_lengths,
-                        vocab_size, batch_size, output_max_length, attention_mechanism_name, cell_type, reuse=True)
+        pred_outputs = set_decoder.setting_decoder(pred_helper, 'decode', num_units, encoder_outputs, encoder_final_state, input_lengths,
+                        vocab_size, batch_size, output_max_length, attention_mechanism_name, cell_type, embeddings,
+                                                   start_tokens, END_TOKEN, beam_width, reuse=True)
 
         tf.identity(train_outputs.sample_id[0], name='train_pred')
         weights = tf.to_float(tf.not_equal(train_output[:, :-1], 1))
@@ -115,7 +125,8 @@ def train_seq2seq(
         'num_units': 256,
         'dropout': 0.2,
         'attention_mechanism_name': 'scaled_luong',
-        'cell_type': 'GRU'
+        'cell_type': 'GRU',
+        'beam_width': 0
     }
     est = tf.estimator.Estimator(
         model_fn=seq2seq,
@@ -146,7 +157,7 @@ def train_seq2seq(
 
 
 
-def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
+def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode, command_line_input=None):
     vocab = p_helper.load_vocab(vocab_file)
 
     params = {
@@ -158,20 +169,24 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
         'output_max_length': 20,
         'dropout': 0.0,
         'attention_mechanism_name': 'scaled_luong',
-        'cell_type': 'GRU'
+        'cell_type': 'GRU',
+        'beam_width': 10
     }
 
     model = tf.estimator.Estimator(
         model_fn=seq2seq,
         model_dir=model_dir, params=params)
 
-    inputs_with_tokens = p_helper.predict_input_fn(input_filename, vocab, input_mode)
+    inputs_with_tokens = p_helper.predict_input_fn(input_filename, vocab, input_mode, command_line_input)
     pred_input_fn = tf.estimator.inputs.numpy_input_fn(x=inputs_with_tokens,
                                                        shuffle=False,
                                                        num_epochs=1)
 
     predictions_obj = model.predict(input_fn=pred_input_fn)
-    final_answer = p_helper.get_out_put_from_tokens(predictions_obj, vocab)
+    if params['beam_width'] > 0:
+        final_answer = p_helper.get_out_put_from_tokens_beam_search(predictions_obj, vocab)
+    else:
+        final_answer = p_helper.get_out_put_from_tokens(predictions_obj, vocab)
 
     if input_mode.upper() == 'INPUT_FILE':
         with open(input_filename) as finput:
@@ -184,7 +199,4 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode):
         return (str(final_answer[0]).replace('<EOS>','').replace('<GO>', ''))
 
     else:
-        for each_answer in final_answer:
-            print('Question: ', str(p_helper.get_out_put_from_tokens(
-                            inputs_with_tokens['input'], vocab)[0]).replace('<EOS>',''))
-            print('Answer', str(each_answer).replace('<EOS>',''))
+        return str(final_answer[0])
