@@ -30,3 +30,13 @@ To Execute the project:
    - Data preparation (if needed): 
       - movie_conversation.txt and movie_lines.txt should be present under `/Data`
       - Run `python3 data_preparation.py`
+
+To run TensorBoard:
+
+  - Activate tensorflow virtual environment
+  - `tensorboard --logdir=locationOfmodelDirectory`
+
+
+Add a directory for model:
+  - `/model/seq2seq` to store checkpoints
+
