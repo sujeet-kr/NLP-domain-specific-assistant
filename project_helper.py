@@ -60,7 +60,7 @@ def make_input_fn(
 
 def predict_input_fn(input_filename, vocab, input_mode, command_line_input, input_process=tokenize_and_map):
     max_len = 0
-    if input_mode.upper() == 'INPUT_FILE' or input_mode.upper() == 'API':
+    if input_mode.upper() == 'FILE' or input_mode.upper() =='TESTING' or input_mode.upper() == 'API':
         with open(input_filename) as finput:
             for in_line in finput:
                 max_len = max(len(in_line.split(" ")), max_len)
@@ -77,7 +77,7 @@ def predict_input_fn(input_filename, vocab, input_mode, command_line_input, inpu
 
         pred_line_tmp = np.delete(predict_lines, 0, 0)
 
-    elif input_mode.upper() == "COMMAND_LINE":
+    elif input_mode.upper() == "COMMAND":
         input_from_user = str(command_line_input).lower()
         predict_lines = np.empty(len(input_from_user.split(" ")) + 1, int)
         new_line_tmp = input_process(input_from_user, vocab)
@@ -85,7 +85,7 @@ def predict_input_fn(input_filename, vocab, input_mode, command_line_input, inpu
         predict_lines = np.vstack((predict_lines, new_line))
         pred_line_tmp = np.delete(predict_lines, 0, 0)
     else:
-        raise ValueError("Input Mode entered is not correct %s " % input_mode)
+        raise ValueError("Input Mode entered is not correct %s " %input_mode)
 
     pred_lines = np.array(pred_line_tmp)
     # print(pred_lines)

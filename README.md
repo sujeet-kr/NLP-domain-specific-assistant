@@ -23,6 +23,7 @@ Setup/Requirements:
 To Execute the project:
 
   - Training: `python3 main.py training`
+  - Testing: `python3 main.py testing` - used for the automatic evaluation of the responses using BLEU
   - Prediction:
     - Input file mode - `python3 main.py inference file` OR `python3 main.py inference`
     - Command line mode - `python3 main.py inference command`
