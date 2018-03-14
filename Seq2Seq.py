@@ -6,6 +6,8 @@ import timeline
 import set_decoder
 import project_helper as p_helper
 
+from nltk.translate.bleu_score import corpus_bleu
+
 GO_TOKEN = 0
 END_TOKEN = 1
 UNK_TOKEN = 2
@@ -157,7 +159,7 @@ def train_seq2seq(
 
 
 
-def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode, command_line_input=None):
+def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode,testing_output=None, command_line_input=None):
     vocab = p_helper.load_vocab(vocab_file)
 
     params = {
@@ -188,12 +190,25 @@ def predict_seq2seq(input_filename, vocab_file, model_dir, input_mode, command_l
     else:
         final_answer = p_helper.get_out_put_from_tokens(predictions_obj, vocab)
 
-    if input_mode.upper() == 'INPUT_FILE':
+    if input_mode.upper() == 'FILE':
         with open(input_filename) as finput:
             for each_answer in final_answer:
                 question = finput.readline()
                 print('Question: ', question.replace('\n','').replace('<EOS>',''))
                 print('Answer', str(each_answer).replace('<EOS>','').replace('<GO>',''))
+
+    elif input_mode.upper() == 'TESTING':
+    # Checking the BLEU score for the entered data
+        references = [[[]]]
+        hypothesis = [[]]
+        with open(testing_output) as foutput:
+            for each_answer in final_answer:
+                print('Ans: ', str(each_answer).replace('<EOS>','').replace('<GO>',''))
+                hypothesis.append((str(each_answer).replace('<EOS>','').replace('<GO>','')).split(' '))
+                reference = foutput.readline()
+                references.append(reference.split(' '))
+        bleu_score = corpus_bleu(references,hypothesis)
+        print("The BLEU score found is ", bleu_score)
 
     elif input_mode.upper() == 'API':
         return (str(final_answer[0]).replace('<EOS>','').replace('<GO>', ''))

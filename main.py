@@ -23,20 +23,23 @@ def main():
             pass
         else:
             sys.argv.append("COMMAND")
-        #FOR PREDICTION     ---  'input_file'/'command_line'
+        #FOR PREDICTION     ---  'file'/'command'
         infer_mode = sys.argv[2]
         if infer_mode.upper() == "FILE":
             print("Entered Inference File Mode")
-            s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'input_file')
+            s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'FILE')
         elif infer_mode.upper() == "COMMAND":
             print("Entered Inference Command Mode")
             command_line_input = input("Question: ")
-            ans = s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'command_line',
+            ans = s2s.predict_seq2seq('Data/prediction_input','Data/vocab_map', 'model/seq2seq', 'COMMAND', None,
                                       command_line_input)
             print("\nQuestion: ", command_line_input)
             print("\nAnswer: ", ans.replace('<EOS>',''))
         else:
             raise ValueError("Correct Inference mode (FILE/COMMAND) was not supplied")
+    elif mode.upper() == 'TESTING':
+        s2s.predict_seq2seq('Data/testing_input_file', 'Data/vocab_map', 'model/seq2seq', 'TESTING',
+                            'Data/testing_ref_file')
     else:
         raise ValueError("Correct Main mode (Training/Inference) was not supplied")
 
