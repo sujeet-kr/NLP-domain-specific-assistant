@@ -1,4 +1,3 @@
-import numpy as np
 import re
 
 min_line_length = 2 # Minimum number of words required to be in a Question/Answer for consideration in training
