@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.contrib import layers
 
-import timeline
+import timeline_hook
 
 import set_decoder
 import project_helper as p_helper
@@ -11,6 +11,7 @@ from nltk.translate.bleu_score import corpus_bleu
 GO_TOKEN = 0
 END_TOKEN = 1
 UNK_TOKEN = 2
+
 def seq2seq(features, labels, mode, params):
 
     vocab_size = params['vocab_size']
@@ -141,7 +142,7 @@ def train_seq2seq(
         vocab, params['input_max_length'], params['output_max_length'])
 
 
-    # Make hooks to print examples of inputs/predictions.
+    # Hooks to print samples for inputs/predictions.
     print_inputs = tf.train.LoggingTensorHook(
         ['input_0', 'output_0'], every_n_iter=100,
         formatter=p_helper.get_formatter(['input_0', 'output_0'], vocab))
@@ -149,12 +150,10 @@ def train_seq2seq(
         ['predictions', 'train_pred'], every_n_iter=100,
         formatter=p_helper.get_formatter(['predictions', 'train_pred'], vocab))
 
-    timeline_hook = timeline.TimelineHook(model_dir, every_n_iter=100)
-
     est.train(
         input_fn=input_fn,
         hooks=[tf.train.FeedFnHook(feed_fn), print_inputs, print_predictions,
-               timeline_hook],
+               timeline_hook.TimelineHook(model_dir, every_n_iter=100)],
         steps=10000)
 
 
